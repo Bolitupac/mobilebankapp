@@ -5,12 +5,13 @@ import React from "react";
 export default function TabLayout(): React.JSX.Element {
   return (
     <Tabs 
-      screenOptions={{ 
-        headerShown: false, 
-        tabBarActiveTintColor: "#00A651", // Nigerian/OPay Green
+      screenOptions={{
+        headerShown: false,
+        tabBarActiveTintColor: "#00A651",
         tabBarStyle: {
-          height: 60,
-          paddingBottom: 5,
+          height: 70,
+          paddingBottom: 10,
+          paddingTop: 10,
         }
       }}
     >

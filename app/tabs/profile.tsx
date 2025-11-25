@@ -1,31 +1,40 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { Link } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import Toast from 'react-native-toast-message';
-
 import {
-  changePassword,
-  getUserInfo,
-  updateUserInfo,
-  validatePassword
-} from "./BankAccount";
+  changeUserPassword,
+  getCurrentUser,
+  logoutUser,
+  updateUserProfile
+} from "../../services/userService";
 
 export default function ProfileScreen(): React.JSX.Element {
-  const info = getUserInfo();
-
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [currentPin, setCurrentPin] = useState("");
   const [newPin, setNewPin] = useState("");
 
   const [showEditInfo, setShowEditInfo] = useState(false);
-  const [name, setName] = useState(info.name);
-  const [email, setEmail] = useState(info.email);
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [accountNumber, setAccountNumber] = useState("");
+
+  useEffect(() => {
+    const user = getCurrentUser();
+    if (user) {
+      setName(user.name);
+      setEmail(user.email);
+      setAccountNumber(user.account_number);
+    }
+  }, []);
 
   // =============================
   // CHANGE PASSWORD FUNCTION
   // =============================
-  const handleChangePassword = () => {
+  const handleChangePassword = async () => {
+    const user = getCurrentUser();
+
     if (!currentPin || !newPin) {
       Toast.show({
         type: 'error',
@@ -37,7 +46,7 @@ export default function ProfileScreen(): React.JSX.Element {
       return;
     }
 
-    if (!validatePassword(currentPin)) {
+    if (!user || user.password !== currentPin) {
       Toast.show({
         type: 'error',
         text1: 'Error',
@@ -59,7 +68,7 @@ export default function ProfileScreen(): React.JSX.Element {
       return;
     }
 
-    const result = changePassword(newPin);
+    const result = await changeUserPassword(newPin);
 
     if (result.success) {
       Toast.show({
@@ -78,7 +87,7 @@ export default function ProfileScreen(): React.JSX.Element {
   // =============================
   // UPDATE PERSONAL INFO FUNCTION
   // =============================
-  const handleSaveInfo = () => {
+  const handleSaveInfo = async () => {
     if (!name || !email) {
       Toast.show({
         type: 'error',
@@ -90,7 +99,7 @@ export default function ProfileScreen(): React.JSX.Element {
       return;
     }
 
-    const result = updateUserInfo(name, email);
+    const result = await updateUserProfile(name, email);
 
     if (result.success) {
       Toast.show({
@@ -115,7 +124,7 @@ export default function ProfileScreen(): React.JSX.Element {
           style={styles.profileImage}
         />
         <Text style={styles.userName}>{name}</Text>
-        <Text style={styles.userInfo}>Account No: 9012345678</Text>
+        <Text style={styles.userInfo}>Account No: {accountNumber}</Text>
         <Text style={styles.userInfo}>Email: {email}</Text>
       </View>
 
@@ -200,9 +209,9 @@ export default function ProfileScreen(): React.JSX.Element {
 
       {/* Logout */}
       <Link href="/" asChild>
-        <TouchableOpacity 
-          style={styles.logoutButton} 
-          onPress={() => console.log('Logout action')}
+        <TouchableOpacity
+          style={styles.logoutButton}
+          onPress={() => logoutUser()}
         >
           <Ionicons name="log-out-outline" size={20} color="#E74C3C" />
           <Text style={styles.logoutButtonText}>Logout</Text>

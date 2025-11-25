@@ -2,15 +2,14 @@ import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import Toast from 'react-native-toast-message';
-import { validatePassword } from './tabs/BankAccount';
+import { loginUser } from '../services/userService';
 
 export default function Login(): React.JSX.Element {
   const [accountNumber, setAccountNumber] = useState('');
   const [password, setPassword] = useState('');
   const router = useRouter();
 
-  const handleLogin = () => {
-    // Check if fields are empty
+  const handleLogin = async () => {
     if (!accountNumber || !password) {
       Toast.show({
         type: 'error',
@@ -22,40 +21,37 @@ export default function Login(): React.JSX.Element {
       return;
     }
 
-    // Check account number length
-    if (accountNumber.length < 6) { 
+    if (accountNumber.length !== 10) {
       Toast.show({
         type: 'error',
         text1: 'Invalid Account Number',
-        text2: 'Account number must be at least 6 digits',
+        text2: 'Account number must be 10 digits',
         position: 'top',
         visibilityTime: 3000,
       });
       return;
     }
 
-    // Check password
-    if (!validatePassword(password)) {
+    const result = await loginUser(accountNumber, password);
+
+    if (result.success) {
+      Toast.show({
+        type: 'success',
+        text1: 'Login Successful',
+        text2: `Welcome ${result.user?.name}!`,
+        position: 'top',
+        visibilityTime: 2000,
+      });
+      router.push('/tabs/home');
+    } else {
       Toast.show({
         type: 'error',
         text1: 'Login Failed',
-        text2: 'Incorrect password',
+        text2: result.message,
         position: 'top',
         visibilityTime: 3000,
       });
-      return;
     }
-
-    // Successful login
-    Toast.show({
-      type: 'success',
-      text1: 'Login Successful',
-      text2: 'Welcome!',
-      position: 'top',
-      visibilityTime: 2000,
-    });
-
-    router.push('/tabs/home'); // redirect to home
   };
 
   return (

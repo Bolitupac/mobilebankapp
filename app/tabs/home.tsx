@@ -1,9 +1,9 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useFocusEffect, useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import Toast from 'react-native-toast-message';
-import { depositAmount, getBalance } from "./BankAccount";
+import { depositMoney, getCurrentUser, getUserBalance } from "../../services/userService";
 
 export default function HomeScreen(): React.JSX.Element {
   const router = useRouter();
@@ -12,20 +12,19 @@ export default function HomeScreen(): React.JSX.Element {
   const [showDeposit, setShowDeposit] = useState(false);
   const [depositValue, setDepositValue] = useState("");
 
-  //first time loading
   useFocusEffect(
     React.useCallback(() => {
-      setBalance(getBalance());
+      const loadBalance = async () => {
+        const bal = await getUserBalance();
+        setBalance(bal);
+      };
+      loadBalance();
     }, [])
   );
 
-  useEffect(() => {
-    setBalance(getBalance());
-  }, []);
-
   const toggleBalance = () => setHideBalance(!hideBalance);
 
-  const handleDeposit = () => {
+  const handleDeposit = async () => {
     const amount = parseFloat(depositValue);
     if (isNaN(amount) || amount <= 0) {
       Toast.show({
@@ -38,18 +37,29 @@ export default function HomeScreen(): React.JSX.Element {
       return;
     }
 
-    depositAmount(amount);
-    setBalance(getBalance());
-    setDepositValue("");
-    setShowDeposit(false);
+    const result = await depositMoney(amount);
 
-    Toast.show({
-      type: 'success',
-      text1: 'Deposit Successful',
-      text2: `₦${amount.toLocaleString()} added to your account`,
-      position: 'top',
-      visibilityTime: 3000,
-    });
+    if (result.success) {
+      setBalance(result.newBalance || 0);
+      setDepositValue("");
+      setShowDeposit(false);
+
+      Toast.show({
+        type: 'success',
+        text1: 'Deposit Successful',
+        text2: `₦${amount.toLocaleString()} added to your account`,
+        position: 'top',
+        visibilityTime: 3000,
+      });
+    } else {
+      Toast.show({
+        type: 'error',
+        text1: 'Deposit Failed',
+        text2: result.message,
+        position: 'top',
+        visibilityTime: 3000,
+      });
+    }
   };
 
   return (

@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import Toast from 'react-native-toast-message';
-import { buyAirtime } from "./BankAccount";
-import { addTransaction } from "./TransactionStorage";
+import { buyAirtime } from "../../services/userService";
+import { addTransaction } from "../../utils/transactionStorage";
 
 export default function AirtimeScreen(): React.JSX.Element {
   const [phoneNumber, setPhoneNumber] = useState("");
@@ -17,7 +17,7 @@ const networks = [
 ];
 
 // handle the notifications
-  const handleBuyAirtime = () => {
+  const handleBuyAirtime = async () => {
     const numAmount = parseFloat(amount);
     if (!phoneNumber || !amount || !pin || !network) {
       Toast.show({ type: 'error', text1: 'Error', text2: 'Please fill in all fields', position: 'top', visibilityTime: 3000 });
@@ -27,7 +27,7 @@ const networks = [
       Toast.show({ type: 'error', text1: 'Error', text2: 'Phone number must be 11 digits', position: 'top', visibilityTime: 3000 });
       return;
     }
-    const result = buyAirtime(numAmount, pin);
+    const result = await buyAirtime(numAmount, pin);
     if (result.success) {
       addTransaction("airtime", { phone: phoneNumber, network, amount: numAmount, newBalance: result.newBalance });
       Toast.show({ type: 'success', text1: 'Airtime Purchased', text2: `₦${numAmount.toLocaleString()} for ${phoneNumber} (${network})`, position: 'top', visibilityTime: 4000 });

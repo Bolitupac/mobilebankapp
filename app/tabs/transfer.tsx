@@ -2,8 +2,8 @@ import { Picker } from '@react-native-picker/picker';
 import React, { useState } from "react";
 import { Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import Toast from 'react-native-toast-message';
-import { transferAmount } from "./BankAccount";
-import { addTransaction } from "./TransactionStorage"; // <-- NEW
+import { transferMoney } from "../../services/userService";
+import { addTransaction } from "../../utils/transactionStorage";
 
 export default function TransferScreen(): React.JSX.Element {
   const [bank, setBank] = useState("");
@@ -11,14 +11,14 @@ export default function TransferScreen(): React.JSX.Element {
   const [amount, setAmount] = useState("");
   const [pin, setPin] = useState(""); 
 
-  const handleTransfer = () => {
+  const handleTransfer = async () => {
     const numAmount = parseFloat(amount);
 
-    if (!bank || !accountNumber || !amount || !pin) {
+    if (!accountNumber || !amount || !pin) {
       Toast.show({
         type: 'error',
         text1: 'Error',
-        text2: 'Please fill in all fields',
+        text2: 'Please fill in all required fields',
         position: 'top',
         visibilityTime: 3000,
       });
@@ -36,13 +36,11 @@ export default function TransferScreen(): React.JSX.Element {
       return;
     }
 
-    const result = transferAmount(numAmount, pin);
+    const result = await transferMoney(accountNumber, numAmount, pin);
 
     if (result.success) {
-
-      // save transfer for to history
       addTransaction("transfer", {
-        bank,
+        bank: bank || "Internal Transfer",
         accountNumber,
         amount: numAmount
       });
@@ -50,7 +48,7 @@ export default function TransferScreen(): React.JSX.Element {
       Toast.show({
         type: 'success',
         text1: 'Transfer Successful',
-        text2: `₦${numAmount.toLocaleString()} sent to ${accountNumber} (${bank})`,
+        text2: `₦${numAmount.toLocaleString()} sent to ${accountNumber}`,
         position: 'top',
         visibilityTime: 4000,
       });
